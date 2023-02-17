@@ -1,0 +1,53 @@
+.left-col {
+  display: grid;
+  grid-template-columns: 0fr 10px 1.6fr;
+  height: 100%;
+}
+
+.gutter-col {
+  grid-row: 1/-1;
+  cursor: col-resize;
+  background-image: url(vertical.png);
+}
+
+.gutter-col, .gutter-row {
+  background-color: rgb(229, 231, 235);
+  background-repeat: no-repeat;
+  background-position: 50%;
+}
+
+.gutter-col-1 {
+  grid-column: 2;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-rows: 1.7fr 10px 0.3fr;
+}
+
+.gutter-row {
+  grid-column: 1/-1;
+  cursor: row-resize;
+  background-image: url(horizontal.png);
+}
+
+.gutter-row-1 {
+  grid-row: 2;
+}
+
+.p-tree-toggler {
+  margin-right: 0px !important;
+}
+
+.p-treenode-content {
+  padding: 0px !important;
+}
+
+.p-treenode {
+  padding: 0px !important;
+}
+
+.p-tree-toggler-icon, .p-tree-toggler {
+  width: 17px !important;
+  height: 17px !important;
+}

@@ -1,0 +1,16 @@
+diff --git a/node_modules/react-split-grid/index.d.ts b/node_modules/react-split-grid/index.d.ts
+index da980b1..86652d2 100644
+--- a/node_modules/react-split-grid/index.d.ts
++++ b/node_modules/react-split-grid/index.d.ts
+@@ -29,6 +29,11 @@ export interface SplitProps {
+     writeStyle?: SplitOptions["writeStyle"]
+     gridTemplateColumns?: SplitOptions["gridTemplateColumns"]
+     gridTemplateRows?: SplitOptions["gridTemplateRows"]
++
++    render: ({ getGridProps, getGutterProps }: {
++        getGridProps: () => any
++        getGutterProps: (_1: string, _2: number) => any
++    }) => React.ReactNode
+ }
+ 
+ declare class Split extends React.Component<SplitProps, any> {}

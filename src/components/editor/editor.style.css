@@ -1,0 +1,11 @@
+section {
+    /* resize: vertical; overflow: auto; */
+    overflow: auto;
+    /* min-height: 500px; */
+}
+
+.monaco-editor, .overflow-guard {
+    height: 100% !important;
+    width: 100% !important;
+    min-width: none !important;
+}

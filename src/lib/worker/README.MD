@@ -1,0 +1,1 @@
+Most of this library is taken from https://github.com/binji/wasm-clang
