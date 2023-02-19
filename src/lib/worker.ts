@@ -1,9 +1,13 @@
 import { API } from "./worker/lib/api";
 import { App } from "./worker/lib/app";
+import CppCheck from "./worker/lib/cppcheck";
 
 let port: MessagePort;
 let api: API;
 let currentApp: App | null = null;
+
+let cppCheck: CppCheck = new CppCheck();
+cppCheck.init();
 
 const apiOptions = {
   async readBuffer(filename: string | URL) {
@@ -105,9 +109,24 @@ async function onAnyMessage(event: MessageEvent) {
             transferList
           );
         }
+        break;
       }
 
-      break;
+      case "runCppCheck": {
+        const responseId = event.data.responseId;
+        let output = null;
+        let transferList;
+        try {
+          output = await cppCheck.run(event.data.data);
+        } finally {
+          port.postMessage(
+            { id: "runAsync", responseId, data: output },
+            transferList
+          );
+        }
+        break;
+      }
+
   }
 }
 

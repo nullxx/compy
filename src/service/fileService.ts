@@ -83,12 +83,7 @@ export default class FileService {
 
     // check if all files are in the same base folder (something/..., something/.../...)
     const baseFolder = files[0].name.split("/")[0];
-    const allInBaseFolder = files.every((file) => {
-      console.log("file.name", file.name, "baseFolder", baseFolder);
-      return file.name.startsWith(baseFolder);
-    });
-
-    console.log("allInBaseFolder", allInBaseFolder);
+    const allInBaseFolder = files.every((file) => file.name.startsWith(baseFolder));
 
     // if allInBaseFolder import the files inside allInBaseFolder as root
     if (allInBaseFolder) {

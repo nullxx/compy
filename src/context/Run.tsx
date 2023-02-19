@@ -12,8 +12,10 @@ import {
   getOtherFiles,
   getSourceFiles,
 } from "../lib/fileHelpers";
+import { FileInput } from "../lib/worker/lib/cppcheck";
 import { WorkerAPI } from "../lib/workerapi";
 import { IFile, IFilePlain } from "../service/fileService";
+import { useEditorContext } from "./EditorContext";
 import { useTerminalContext } from "./TerminalContext";
 
 type OnRunningChange = (isRunning: boolean) => void;
@@ -45,6 +47,8 @@ export default function RunProvider({
   const [isRunning, setIsRunning] = useState(false);
 
   const { addInputListener, write } = useTerminalContext();
+  const { addChangeFileListener, mark, addOpenEditorListener } =
+    useEditorContext();
 
   const addRunningChangeListener = (listener: OnRunningChange) => {
     runningChangeListeners.current.push(listener);
@@ -75,6 +79,7 @@ export default function RunProvider({
       name: file?.path,
       contents: file?.content,
     };
+
     await apiRef.current?.compileLinkRun([source], [], [], []).finally(() => {
       setIsRunning(false);
     });
@@ -111,6 +116,34 @@ export default function RunProvider({
   useEffect(() => {
     runningChangeListeners.current.forEach((l) => l(isRunning));
   }, [isRunning]);
+
+  useEffect(() => {
+    const fn = async (file: IFilePlain) => {
+      const source: FileInput = {
+        name: file?.path,
+        contents: file?.content,
+      };
+
+      const headers = await getHeaderFiles();
+
+      const result = await apiRef.current?.runCppCheck({
+        source,
+        headers
+      });
+
+      if (!result) return;
+
+      mark(result);
+    };
+    const rmListener = addChangeFileListener(fn);
+    const rmEditorListener = addOpenEditorListener(fn);
+
+    return () => {
+      rmListener();
+      rmEditorListener();
+    };
+
+  }, [addChangeFileListener, addOpenEditorListener, mark]);
 
   const value = {
     runProject,

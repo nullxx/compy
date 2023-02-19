@@ -33,6 +33,12 @@ export interface CompileLinkRunOptions {
   libObjs: FileInput[];
 }
 
+export interface RunCppCheckOptions {
+  source: FileInput;
+  headers: FileInput[];
+  rest: FileInput[];
+}
+
 export class API {
   moduleCache: { [key: string]: WebAssembly.Module };
   readBuffer: (filename: string | URL) => Promise<ArrayBuffer>;

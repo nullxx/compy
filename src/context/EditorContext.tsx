@@ -11,6 +11,8 @@ export interface EditorContext {
   theme: string;
   setTheme: (theme: string) => void;
 
+  setMonaco: (monaco: any) => void;
+
   addOpenTabListener: (listener: OpenFileTabListener) => () => void;
   openFileTab: (file: IFilePlain) => void;
 
@@ -26,6 +28,15 @@ export interface EditorContext {
   setCurrentFile: (file: IFilePlain) => void;
   currentFile: IFilePlain | null;
 
+  mark(
+    opts: {
+      file: string;
+      line: number;
+      column: number;
+      message: string;
+      severity: string;
+    }[]
+  ): void;
 }
 
 const Context = createContext<EditorContext>({
@@ -41,6 +52,8 @@ const Context = createContext<EditorContext>({
   closeFileTab: () => {},
   setCurrentFile: () => {},
   currentFile: null,
+  mark: () => {},
+  setMonaco: () => {},
 });
 
 const themePrefix = "vs-";
@@ -54,6 +67,7 @@ export default function EditorProvider({
     themePrefix + (localStorage.getItem("dark") === "true" ? "dark" : "light")
   );
   const [currentFile, setCurrentFile] = React.useState<IFilePlain | null>(null);
+  const monacoRef = React.useRef<any>(null);
   const openFileListenerRef = React.useRef<OpenFileTabListener[]>([]);
   const openFileEditorListenerRef = React.useRef<OnFileEditorShowListener[]>(
     []
@@ -132,6 +146,80 @@ export default function EditorProvider({
     closeFileListenerRef.current.forEach((l) => l(file));
   };
 
+  const setMonaco = (monaco: any) => {
+    monacoRef.current = monaco;
+  };
+
+  const mark = (
+    opts: {
+      file: string;
+      line: number;
+      column: number;
+      message: string;
+      severity: string;
+    }[]
+  ) => {
+    const monaco = monacoRef.current;
+
+    function getMonacoSeverity(str: string) {
+      if (!monaco) {
+        return 4;
+      }
+
+      switch (str) {
+        case "error":
+          return monaco.MarkerSeverity.Error;
+        case "warning":
+          return monaco.MarkerSeverity.Warning;
+        case "info":
+          return monaco.MarkerSeverity.Info;
+        default:
+          return monaco.MarkerSeverity.Warning;
+      }
+    }
+
+    // group by file
+    const grouped = opts.reduce((acc, o) => {
+      if (!acc[o.file]) {
+        acc[o.file] = [];
+      }
+
+      acc[o.file].push(o);
+      return acc;
+    }, {} as { [key: string]: typeof opts });
+
+    monaco.editor.getModels().forEach((model: any) => {
+      monaco.editor.setModelMarkers(model, "owner", []);
+    });
+
+    Object.keys(grouped).forEach((file) => {
+      const uri = monaco?.Uri.from({
+        scheme: "file",
+        path: file,
+      });
+      if (!uri) {
+        return null;
+      }
+
+      const model = monaco?.editor.getModel(uri);
+      if (!model) {
+        return null;
+      }
+
+      const markers = grouped[file].map((o) => ({
+        severity: getMonacoSeverity(o.severity),
+        startLineNumber: o.line,
+        startColumn: o.column,
+        endLineNumber: o.line,
+        // endColumn: end of line
+        endColumn: o.column + Infinity,
+        message: o.message,
+      }));
+
+      monaco?.editor.setModelMarkers(model, "owner", markers);
+    });
+  };
+
   const value = {
     theme,
     setTheme,
@@ -145,6 +233,8 @@ export default function EditorProvider({
     closeFileTab,
     setCurrentFile,
     currentFile,
+    mark,
+    setMonaco,
   };
 
   return <Context.Provider value={value}>{children}</Context.Provider>;

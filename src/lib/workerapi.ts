@@ -1,3 +1,5 @@
+import { CppCheckOut, RunCppCheckOptions } from "./worker/lib/cppcheck";
+
 export class WorkerAPI {
   nextResponseId: number;
   responseCBs: Map<number, { resolve: any; reject: any }>;
@@ -13,7 +15,7 @@ export class WorkerAPI {
 
   constructor(
     private onCompleteInput: () => Promise<string>,
-    private write: (text: string) => void,
+    private write: (text: string) => void
   ) {
     this.nextResponseId = 0;
     this.responseCBs = new Map();
@@ -40,7 +42,7 @@ export class WorkerAPI {
 
   setShowTiming(value: boolean) {
     this.port.postMessage({ id: "setShowTiming", data: value });
-  } 
+  }
 
   reset() {
     this.responseCBs = new Map();
@@ -84,9 +86,15 @@ export class WorkerAPI {
     });
   }
 
+  runCppCheck(opts: RunCppCheckOptions): Promise<CppCheckOut[]> {
+    return this.runAsync("runCppCheck", opts) as Promise<CppCheckOut[]>;
+  }
+
   private onmessage(event: any) {
     if (this.workerTerminated) {
-      console.error("Worker terminated, but still receiving messages. Evicting");
+      console.error(
+        "Worker terminated, but still receiving messages. Evicting"
+      );
       return;
     }
 
@@ -106,8 +114,7 @@ export class WorkerAPI {
           view[value.length] = 0;
 
           Atomics.notify(new Int32Array(WorkerAPI.sharedMem!.buffer), 0);
-
-        })
+        });
         break;
       }
 

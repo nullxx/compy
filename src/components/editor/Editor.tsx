@@ -44,6 +44,7 @@ function CustomEditor() {
     addOpenEditorListener,
     notifyFileChange,
     addCloseTabListener,
+    setMonaco
   } = useEditorContext();
   const { showConfirm } = usePrompt();
 
@@ -76,7 +77,10 @@ function CustomEditor() {
         const model = monacoRef.current!.editor.createModel(
           file.content,
           lang,
-          monacoRef.current!.Uri.parse(file.path)
+          monacoRef.current!.Uri.from({
+            scheme: "file",
+            path: file.path,
+          })
         );
         modelsRef.current[file.path] = model;
         editorRef.current.setModel(model);
@@ -145,6 +149,8 @@ function CustomEditor() {
   ) {
     editorRef.current = editor;
     monacoRef.current = monaco;
+
+    setMonaco(monaco);
     editorRef.current.setModel(null);
 
     afterLoadedFns.current.forEach((fn) => fn(editor, monaco));
