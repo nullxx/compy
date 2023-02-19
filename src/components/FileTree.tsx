@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Tree } from "primereact/tree";
 import { SplitButton } from "primereact/splitbutton";
 import { ContextMenu } from "primereact/contextmenu";
-import FileService, { fileService, IFile } from "../service/fileService";
+import FileService, { fileService, IFile, IFilePlain } from "../service/fileService";
 import { usePrompt } from "../context/TextPrompt";
 import { useEditorContext } from "../context/EditorContext";
 import { useRunContext } from "../context/Run";
@@ -163,8 +163,9 @@ export const FileTree = () => {
     });
 
     if (path) {
-      await fileService.createFile(path, "");
-      loadFiles();
+      const file = await fileService.createFile(path, "");
+      await loadFiles();
+      openFileEditor((await fileService.getFileById(file.id, true)) as IFilePlain);
     }
   };
 

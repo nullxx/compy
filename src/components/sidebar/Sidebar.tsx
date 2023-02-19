@@ -8,26 +8,8 @@ interface SidebarItem {
   icon: (active: boolean) => JSX.Element;
   content: JSX.Element;
 }
+
 export default function Sidebar() {
-  const [selectedItem, setSelectedItem] = useState<SidebarItem | null>(null);
-  const [expanded, setExpanded] = useState(false);
-
-  const onItemSelect = (item: SidebarItem) => {
-    let nextExpanded = item !== selectedItem || !expanded;
-    setExpanded(nextExpanded);
-
-    setSelectedItem(nextExpanded ? item : null);
-    // setSelectedItem(item);
-
-    // hide the sidebar if it's expanded by user resize
-    const div = document.querySelector(".left-col") as HTMLDivElement;
-    const currentGridTemplateColumns = div.style.gridTemplateColumns;
-    div.style.gridTemplateColumns = currentGridTemplateColumns.replace(
-      /[^ ]+/,
-      "0fr"
-    );
-  };
-
   const items = useMemo(
     () => [
       {
@@ -88,6 +70,24 @@ export default function Sidebar() {
     ],
     []
   );
+
+  const [selectedItem, setSelectedItem] = useState<SidebarItem | null>(items[0]); // select the first item by default
+  const [expanded, setExpanded] = useState(true); // expanded by default
+
+  const onItemSelect = (item: SidebarItem) => {
+    let nextExpanded = item !== selectedItem || !expanded;
+    setExpanded(nextExpanded);
+
+    setSelectedItem(nextExpanded ? item : null);
+
+    // hide the sidebar if it's expanded by user resize
+    const div = document.querySelector(".left-col") as HTMLDivElement;
+    const currentGridTemplateColumns = div.style.gridTemplateColumns;
+    div.style.gridTemplateColumns = currentGridTemplateColumns.replace(
+      /[^ ]+/,
+      "0fr"
+    );
+  };
 
   return (
     <div className="flex">

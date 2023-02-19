@@ -156,7 +156,7 @@ export default class FileService {
     return true;
   }
 
-  async createFile(path: string, content: string): Promise<boolean> {
+  async createFile(path: string, content: string): Promise<IFile> {
     const contentsArrayBuffer = new TextEncoder().encode(content);
     const file = {
       id: Date.now(),
@@ -165,7 +165,7 @@ export default class FileService {
       project: FileService.currentProject,
     };
     await db.files.add(file);
-    return true;
+    return file;
   }
 
   async getProjects(): Promise<string[]> {

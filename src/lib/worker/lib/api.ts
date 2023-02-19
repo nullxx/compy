@@ -3,6 +3,7 @@ import { App } from "./app";
 import { MemFS } from "./memfs";
 import { Tar, TarPairType } from "./tar";
 import { ClangParser } from "./clangparser";
+import type { SourceType } from "../../fileHelpers";
 
 export interface APIOptions {
   readBuffer: (filename: string | URL) => Promise<ArrayBuffer>;
@@ -37,6 +38,7 @@ export interface CompileLinkRunOptions {
 export interface RunAnalysisOptions {
   source: FileInput;
   headers: FileInput[];
+  sourceType: SourceType;
 }
 
 export class API {
@@ -294,7 +296,7 @@ export class API {
     await this.ready;
     const clang = await this.getModule(this.clangFilename.toString());
 
-    const { source, headers } = options;
+    const { source, sourceType, headers } = options;
 
     for (const header of headers) {
       this.memfs.addFile(header.name, header.contents);
@@ -303,15 +305,15 @@ export class API {
     this.memfs.addFile(source.name, source.contents);
 
     const headersStr = headers
-    .filter((h) => h.name === source.name)
-    .map((h) => `-include${h.name}`).join(" ");
+      .filter((h) => h.name === source.name)
+      .map((h) => `-include${h.name}`)
+      .join(" ");
 
     let output = "";
     const remove = this.memfs.onHostWrite((str) => {
       output += str;
     });
-    // test this: clang -cc1 -fsyntax-only -Wall main.c
-    try {
+
       await this.run(
         clang,
         false,
@@ -319,18 +321,18 @@ export class API {
         "-cc1",
         "-fsyntax-only",
         "-Wall",
+        "-x",
+        sourceType,
         ...this.diagnosticsClangCommonArgs,
         headersStr,
         source.name
-      );
-    } catch (error) {
-      console.log(error);
-    }
+      ).catch(() => {
+        // ignore
+      }) 
 
     remove();
 
     const parsed = ClangParser.parse(output);
-    console.log(parsed);
 
     return parsed;
   }
