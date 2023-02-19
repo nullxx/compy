@@ -197,13 +197,27 @@ export default function EditorProvider({
         scheme: "file",
         path: file,
       });
+
       if (!uri) {
         return null;
       }
 
-      const model = monaco?.editor.getModel(uri);
+
+      let model = monaco?.editor.getModel(uri);
       if (!model) {
-        return null;
+        const uri = monaco?.Uri.from({
+          scheme: "file",
+          path: currentFile?.path,
+        });
+
+        if (!uri) {
+          return null;
+        }
+
+        model = monaco?.editor.getModel(uri);
+        if (!model) {
+          return null;
+        }
       }
 
       const markers = grouped[file].map((o) => ({

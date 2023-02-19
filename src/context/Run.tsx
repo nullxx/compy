@@ -122,9 +122,10 @@ export default function RunProvider({
 
   useEffect(() => {
     const fn = debounce(async (file: IFilePlain) => {
+      const contentArrBuffer = new TextEncoder().encode(file.content);
       const source: FileInput = {
         name: file?.path,
-        contents: file?.content,
+        contents: contentArrBuffer,
       };
 
       const headers = await getHeaderFiles();

@@ -302,7 +302,9 @@ export class API {
 
     this.memfs.addFile(source.name, source.contents);
 
-    const headersStr = headers.map((h) => `-include ${h.name}`).join(" ");
+    const headersStr = headers
+    .filter((h) => h.name === source.name)
+    .map((h) => `-include${h.name}`).join(" ");
 
     let output = "";
     const remove = this.memfs.onHostWrite((str) => {

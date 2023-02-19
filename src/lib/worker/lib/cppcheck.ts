@@ -23,7 +23,7 @@ interface ExportedCppCheck {
       }
     ) => void;
     readFile: (path: string, options: { encoding: "utf8" }) => string;
-    mkdir:(path: string, mode?: number) => void;
+    mkdir: (path: string, mode?: number) => void;
     mkdirTree: (path: string, mode?: number) => void;
     stat: (path: string, dontFollow: boolean) => any;
   };
@@ -55,6 +55,8 @@ export default class CppCheck {
   ready: Promise<void> = Promise.resolve();
   baseInited: boolean = false;
   exportedCppCheck: ExportedCppCheck | null = null;
+
+  ignoreFileNames: string[] = ["nofile"];
 
   constructor() {
     this.baseReady = import("../resources/cppcheck").then(
@@ -101,7 +103,7 @@ export default class CppCheck {
   createFile(name: string, contents: ArrayBuffer | string) {
     assert(this.baseInited);
     assert(this.exportedCppCheck !== null);
-    
+
     // creates a file and its parent directories
     const parts = name.split("/");
     parts.pop();
@@ -137,7 +139,7 @@ export default class CppCheck {
       "--enable=all",
       "--std=c++17",
       "--template={file}$%*{line}$%*{column}$%*{severity}$%*{id}$%*{message}",
-      "--inline-suppr",
+      // "--inline-suppr",
       "--language=" + sourceType,
       "--quiet",
       "--library=std.cfg",
@@ -176,6 +178,9 @@ export default class CppCheck {
     for (const line of lines) {
       const [file, lineStr, columnStr, severity, id, message] =
         line.split("$%*");
+
+      if (this.ignoreFileNames.includes(file)) continue;
+
       parsed.push({
         file,
         line: parseInt(lineStr),

@@ -118,7 +118,7 @@ async function onAnyMessage(event: MessageEvent) {
       try {
         output = await api.runAnalysis(event.data.data);
         if (!output || !output.length) { // if no errors, run cppcheck
-          output = cppCheck.run(event.data.data);
+          // output = await cppCheck.run(event.data.data); // TODO: add more files to cppcheck env
         }
       } catch (e) {
         console.error(e);

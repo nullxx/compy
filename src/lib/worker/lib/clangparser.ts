@@ -9,14 +9,14 @@ export interface Diagnostic {
 export class ClangParser {
   static parse(input: string) {
     console.log(input);
-    const matched = input.matchAll(/(\w+)\.(.+):(\d+):(\d+):\s(\w+):\s(.+)/gm);
+    const matched = input.matchAll(/(.+):(\d+):(\d+):\s(\w+):\s(.+)/gm);
     const diagnostics: Diagnostic[] = [];
 
     let match: RegExpMatchArray | null;
     while ((match = matched.next().value)) {
-      const [, name, ext, line, column, severity, message] = match;
+      const [, file, line, column, severity, message] = match;
       diagnostics.push({
-        file: name.concat("." + ext),
+        file,
         line: +line,
         column: +column,
         severity,
