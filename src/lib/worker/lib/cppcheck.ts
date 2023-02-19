@@ -1,3 +1,4 @@
+import { SourceType } from "../../fileHelpers";
 import { assert } from "../utils";
 interface ExportedCppCheck {
   callMain: (args: string[]) => number;
@@ -36,6 +37,7 @@ export interface FileInput {
 export interface RunCppCheckOptions {
   source: FileInput;
   headers: FileInput[];
+  sourceType: SourceType;
 }
 
 export interface CppCheckOut {
@@ -116,7 +118,7 @@ export default class CppCheck {
     assert(this.baseInited);
     assert(this.exportedCppCheck !== null);
 
-    const { source, headers } = options;
+    const { source, sourceType, headers } = options;
 
     this.createFile(source.name, source.contents);
 
@@ -136,6 +138,7 @@ export default class CppCheck {
       "--std=c++17",
       "--template={file}$%*{line}$%*{column}$%*{severity}$%*{id}$%*{message}",
       "--inline-suppr",
+      "--language=" + sourceType,
       "--quiet",
       "--library=std.cfg",
       "--suppress=missingIncludeSystem",

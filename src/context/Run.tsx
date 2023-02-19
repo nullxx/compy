@@ -6,11 +6,14 @@ import {
   useRef,
   useState,
 } from "react";
+import debounce from "just-debounce-it";
+
 import {
   getHeaderFiles,
   getLibFiles,
   getOtherFiles,
   getSourceFiles,
+  getSourceType,
 } from "../lib/fileHelpers";
 import { FileInput } from "../lib/worker/lib/cppcheck";
 import { WorkerAPI } from "../lib/workerapi";
@@ -118,7 +121,7 @@ export default function RunProvider({
   }, [isRunning]);
 
   useEffect(() => {
-    const fn = async (file: IFilePlain) => {
+    const fn = debounce(async (file: IFilePlain) => {
       const source: FileInput = {
         name: file?.path,
         contents: file?.content,
@@ -128,13 +131,15 @@ export default function RunProvider({
 
       const result = await apiRef.current?.runCppCheck({
         source,
-        headers
+        headers,
+        sourceType: getSourceType(file)
       });
 
       if (!result) return
 
       mark(result);
-    };
+    }, 500, false);
+    
     const rmListener = addChangeFileListener(fn);
     const rmEditorListener = addOpenEditorListener(fn);
 

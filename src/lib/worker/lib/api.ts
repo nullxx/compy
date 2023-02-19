@@ -267,16 +267,15 @@ export class API {
       "-z",
       `stack-size=${stackSize}`,
       `-L${libdir}`,
+      crt1,
       libPathsStr,
+      libPathsStr,
+      ...objs,
+      "-o",
+      wasm,
       "-lc",
       "-lc++",
       "-lc++abi",
-      // "-lcanvas",
-      libPathsStr,
-      crt1,
-      ...objs,
-      "-o",
-      wasm
     );
   }
 
