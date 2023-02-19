@@ -116,7 +116,10 @@ async function onAnyMessage(event: MessageEvent) {
       let output = null;
       let transferList;
       try {
-        output = await cppCheck.run(event.data.data);
+        output = await api.runAnalysis(event.data.data);
+        if (!output || !output.length) { // if no errors, run cppcheck
+          output = cppCheck.run(event.data.data);
+        }
       } catch (e) {
         console.error(e);
       } finally {

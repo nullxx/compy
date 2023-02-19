@@ -29,6 +29,9 @@ export class MemFS {
   exports?: any;
   mem?: Memory;
 
+  onHostWriteCb?: (str: string) => void;
+  shouldWriteStdout = true;
+
   constructor(options: MemFSOptions) {
     const compileStreaming = options.compileStreaming;
     this.hostWrite = options.hostWrite;
@@ -58,6 +61,14 @@ export class MemFS {
         this.mem = new Memory(this.exports.memory);
         this.exports.init();
       });
+  }
+
+  onHostWrite(cb: (str: string) => void) {
+    this.onHostWriteCb = cb;
+
+    return () => {
+      this.onHostWriteCb = undefined;
+    };
   }
 
   set hostMem(mem: Memory) {
@@ -129,7 +140,10 @@ export class MemFS {
       size += len;
     }
     this.hostMem_.write32(nwritten_out, size);
-    this.hostWrite(str);
+
+    if (this.shouldWriteStdout) this.hostWrite(str);
+    this.onHostWriteCb?.(str);
+
     return ESUCCESS;
   }
 

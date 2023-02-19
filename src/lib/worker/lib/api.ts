@@ -2,9 +2,10 @@ import { assert, msToSec } from "../utils";
 import { App } from "./app";
 import { MemFS } from "./memfs";
 import { Tar, TarPairType } from "./tar";
+import { ClangParser } from "./clangparser";
 
 export interface APIOptions {
-  readBuffer: (filename: string | URL) => Promise<ArrayBuffer>;
+  readBuffer: (filename: string | URL) => Promise<ArrayBuffer>;
   compileStreaming: (filename: string | URL) => Promise<WebAssembly.Module>;
   hostWrite: (str: string) => void;
   hostReadLine: () => void;
@@ -14,7 +15,7 @@ export interface APIOptions {
   showTiming?: boolean;
   sharedMem: WebAssembly.Memory;
 
-  memfs?: URL | string ;
+  memfs?: URL | string;
 }
 
 export interface CompileOptions {
@@ -33,16 +34,15 @@ export interface CompileLinkRunOptions {
   libObjs: FileInput[];
 }
 
-export interface RunCppCheckOptions {
+export interface RunAnalysisOptions {
   source: FileInput;
   headers: FileInput[];
-  rest: FileInput[];
 }
 
 export class API {
   moduleCache: { [key: string]: WebAssembly.Module };
-  readBuffer: (filename: string | URL) => Promise<ArrayBuffer>;
-  compileStreaming: (filename: string | URL) => Promise<WebAssembly.Module>;
+  readBuffer: (filename: string | URL) => Promise<ArrayBuffer>;
+  compileStreaming: (filename: string | URL) => Promise<WebAssembly.Module>;
   hostWrite: (str: string) => void;
   hostRead: () => void;
   clangFilename: URL;
@@ -51,7 +51,8 @@ export class API {
   showTiming: boolean;
   sharedMem: WebAssembly.Memory;
 
-  clangCommonArgs: string[];
+  compileClangCommonArgs: string[];
+  diagnosticsClangCommonArgs: string[];
 
   memfs: MemFS;
   ready: Promise<void>;
@@ -68,7 +69,7 @@ export class API {
     this.showTiming = options.showTiming || false;
     this.sharedMem = options.sharedMem;
 
-    this.clangCommonArgs = [
+    this.compileClangCommonArgs = [
       "-disable-free",
       "-isysroot",
       "/",
@@ -84,6 +85,19 @@ export class API {
       "80",
       "-fcolor-diagnostics",
     ];
+
+    this.diagnosticsClangCommonArgs = [
+      "-disable-free",
+      "-isysroot",
+      "/",
+      "-internal-isystem",
+      "/include/c++/v1",
+      "-internal-isystem",
+      "/include",
+      "-internal-isystem",
+      "/lib/clang/8.0.1/include",
+    ];
+
     // debugger;
     this.memfs = new MemFS({
       compileStreaming: this.compileStreaming,
@@ -123,10 +137,7 @@ export class API {
 
   async getModule(name: string) {
     if (this.moduleCache[name]) return this.moduleCache[name];
-    const module = await this.hostLogAsync(
-      `Fetching and compiling ${name}`,
-      this.compileStreaming(name)
-    );
+    const module = await this.compileStreaming(name);
     this.moduleCache[name] = module;
     return module;
   }
@@ -162,13 +173,14 @@ export class API {
     const clang = await this.getModule(this.clangFilename.toString());
     await this.run(
       clang,
+      true,
       "clang",
       "-cc1",
       "-Wall",
       "-emit-obj",
       // headersStr,
       // libPathsStr,
-      ...this.clangCommonArgs,
+      ...this.compileClangCommonArgs,
       "-O2",
       "-o",
       obj,
@@ -177,77 +189,8 @@ export class API {
       source.name
     );
 
-    // test this: clang -cc1 -Wall -fsyntax-only -isysroot / -internal-isystem /include/c++/v1 -internal-isystem /include -internal-isystem /lib/clang/8.0.1/include -ferror-limit 19 -fmessage-length 80 -fcolor-diagnostics -O2 -x c++ read.c
-      // await this.run(
-      //   clang,
-      //   "clang",
-      //   "-cc1",
-      //   "-Wall",
-      //   "-fsyntax-only",
-      //   "-isysroot",
-      //   "/",
-      //   "-internal-isystem",
-      //   "/include/c++/v1",
-      //   "-internal-isystem",
-      //   "/include",
-      //   "-internal-isystem",
-      //   "/lib/clang/8.0.1/include",
-      //   "-ferror-limit",
-      //   "19",
-      //   "-fmessage-length",
-      //   "80",
-      //   "-fcolor-diagnostics",
-      //   "-O2",
-      //   "-x",
-      //   "c++",
-      //   source.name
-      // );
-
     return obj;
   }
-
-  //   async compileToAssembly(options) {
-  //     const input = options.input;
-  //     const output = options.output;
-  //     const contents = options.contents;
-  //     const obj = options.obj;
-  //     const triple = options.triple || "x86_64";
-  //     const opt = options.opt || "2";
-
-  //     await this.ready;
-  //     this.memfs.addFile(input, contents);
-  //     const clang = await this.getModule(this.clangFilename);
-  //     await this.run(
-  //       clang,
-  //       "clang",
-  //       "-cc1",
-  //       "-S",
-  //       ...this.clangCommonArgs,
-  //       `-triple=${triple}`,
-  //       "-mllvm",
-  //       "--x86-asm-syntax=intel",
-  //       `-O${opt}`,
-  //       "-o",
-  //       output,
-  //       "-x",
-  //       "c++",
-  //       input
-  //     );
-  //     return this.memfs.getFileContents(output);
-  //   }
-
-  //   async compileTo6502(options) {
-  //     const input = options.input;
-  //     const output = options.output;
-  //     const contents = options.contents;
-  //     const flags = options.flags;
-
-  //     await this.ready;
-  //     this.memfs.addFile(input, contents);
-  //     const vasm = await this.getModule("vasm6502_oldstyle");
-  //     await this.run(vasm, "vasm6502_oldstyle", ...flags, "-o", output, input);
-  //     return this.memfs.getFileContents(output);
-  //   }
 
   async link(objs: string[], wasm: string, libPaths: string[]) {
     const stackSize = 1024 * 1024;
@@ -261,6 +204,7 @@ export class API {
 
     return await this.run(
       lld,
+      true,
       "wasm-ld",
       "--no-threads",
       "--export-dynamic", // TODO required?
@@ -275,21 +219,26 @@ export class API {
       wasm,
       "-lc",
       "-lc++",
-      "-lc++abi",
+      "-lc++abi"
     );
   }
 
-  async run(module: WebAssembly.Module, ...args: string[]) {
-    this.hostLog(`${args.join(" ")}\n`);
+  async run(
+    module: WebAssembly.Module,
+    shouldWriteStdout = true,
+    ...args: string[]
+  ) {
+    if (shouldWriteStdout) this.hostLog(`${args.join(" ")}\n`);
 
     const name = args[0];
     const start = +new Date();
     const app = new App(module, this.memfs, name, ...args.slice(1));
+    app.shouldWriteStdout = shouldWriteStdout;
     const instantiate = +new Date();
     const stillRunning = await app.run();
     const end = +new Date();
-    this.hostWrite("\n");
-    if (this.showTiming) {
+    if (shouldWriteStdout) this.hostWrite("\n");
+    if (this.showTiming && shouldWriteStdout) {
       const green = "\x1b[92m";
       const normal = "\x1b[0m";
       let msg = `${green}(${msToSec(start, instantiate)}s`;
@@ -338,6 +287,49 @@ export class API {
       WebAssembly.compile(buffer)
     );
 
-    return await this.run(testMod, wasm);
+    return await this.run(testMod, true, wasm);
+  }
+
+  async runAnalysis(options: RunAnalysisOptions) {
+    await this.ready;
+    const clang = await this.getModule(this.clangFilename.toString());
+
+    const { source, headers } = options;
+
+    for (const header of headers) {
+      this.memfs.addFile(header.name, header.contents);
+    }
+
+    this.memfs.addFile(source.name, source.contents);
+
+    const headersStr = headers.map((h) => `-include ${h.name}`).join(" ");
+
+    let output = "";
+    const remove = this.memfs.onHostWrite((str) => {
+      output += str;
+    });
+    // test this: clang -cc1 -fsyntax-only -Wall main.c
+    try {
+      await this.run(
+        clang,
+        false,
+        "clang",
+        "-cc1",
+        "-fsyntax-only",
+        "-Wall",
+        ...this.diagnosticsClangCommonArgs,
+        headersStr,
+        source.name
+      );
+    } catch (error) {
+      console.log(error);
+    }
+
+    remove();
+
+    const parsed = ClangParser.parse(output);
+    console.log(parsed);
+
+    return parsed;
   }
 }

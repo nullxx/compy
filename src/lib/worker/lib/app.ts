@@ -17,6 +17,7 @@ export class App {
   instance?: WebAssembly.Instance;
   exports?: Record<string, any>;
   mem?: Memory;
+  _shouldWriteStdout: boolean = true;
 
   constructor(
     module: WebAssembly.Module,
@@ -53,6 +54,15 @@ export class App {
     });
   }
 
+  set shouldWriteStdout(value: boolean) {
+    this.memfs.shouldWriteStdout = value;
+    this._shouldWriteStdout = value;
+  }
+
+  get shouldWriteStdout() {
+    return this._shouldWriteStdout;
+  }
+
   async run() {
     await this.ready;
 
@@ -86,7 +96,8 @@ export class App {
 
       let msg = `\x1b[91mExit code: ${code} (${errorMessage})`;
       msg += "\x1b[0m\n";
-      this.memfs.hostWrite(msg);
+
+      if (this.shouldWriteStdout) this.memfs.hostWrite(msg);
 
       // Propagate error.
       throw exn;

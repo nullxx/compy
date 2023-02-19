@@ -172,6 +172,9 @@ function CustomEditor() {
           language={lang}
           onChange={onChange}
           onMount={handleEditorDidMount}
+          options={{
+            fixedOverflowWidgets: true,
+          }}
         />
       </div>
     </div>

@@ -138,7 +138,7 @@ export default function RunProvider({
       if (!result) return
 
       mark(result);
-    }, 500, false);
+    }, 200, true);
     
     const rmListener = addChangeFileListener(fn);
     const rmEditorListener = addOpenEditorListener(fn);
