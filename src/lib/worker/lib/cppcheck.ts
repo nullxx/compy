@@ -5,9 +5,26 @@ interface ExportedCppCheck {
     writeFile: (
       path: string,
       data: string | ArrayBuffer,
-      options: { encoding: "utf8" }
+      options: {
+        flags?:
+          | "r"
+          | "r+"
+          | "w"
+          | "wx"
+          | "w+"
+          | "wx+"
+          | "a"
+          | "ax"
+          | "a+"
+          | "ax+";
+        mode?: number;
+        encoding: "utf8";
+      }
     ) => void;
     readFile: (path: string, options: { encoding: "utf8" }) => string;
+    mkdir:(path: string, mode?: number) => void;
+    mkdirTree: (path: string, mode?: number) => void;
+    stat: (path: string, dontFollow: boolean) => any;
   };
 }
 
@@ -74,6 +91,22 @@ export default class CppCheck {
     const cfgFileText = await cfgFile.text();
 
     this.exportedCppCheck.FS.writeFile("std.cfg", cfgFileText, {
+      flags: "w+",
+      encoding: "utf8",
+    });
+  }
+
+  createFile(name: string, contents: ArrayBuffer | string) {
+    assert(this.baseInited);
+    assert(this.exportedCppCheck !== null);
+    
+    // creates a file and its parent directories
+    const parts = name.split("/");
+    parts.pop();
+    const dir = parts.join("/");
+    this.exportedCppCheck.FS.mkdirTree(dir);
+    this.exportedCppCheck.FS.writeFile(name, contents, {
+      flags: "w",
       encoding: "utf8",
     });
   }
@@ -84,22 +117,18 @@ export default class CppCheck {
     assert(this.exportedCppCheck !== null);
 
     const { source, headers } = options;
-    
-    this.exportedCppCheck.FS.writeFile(source.name, source.contents, {
-      encoding: "utf8",
-    });
+
+    this.createFile(source.name, source.contents);
 
     headers.forEach((h) => {
-      this.exportedCppCheck?.FS.writeFile(h.name, h.contents, {
-        encoding: "utf8",
-      });
+      this.createFile(h.name, h.contents);
     });
 
-    this.exportedCppCheck.FS.writeFile("cppcheck-result.txt", "", {
-      encoding: "utf8",
-    });
+    this.createFile("cppcheck-result.txt", "");
 
-    const includeDirs = headers.map((h) => h.name.includes('/') ? h.name.replaceAll(/\/[^/]+$/g, "") : ".");
+    const includeDirs = headers.map((h) =>
+      h.name.includes("/") ? h.name.replaceAll(/\/[^/]+$/g, "") : "."
+    );
     const includeDirsStr = includeDirs.map((dir) => `-I="${dir}"`).join(" ");
 
     const args = [

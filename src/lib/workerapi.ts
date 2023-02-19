@@ -87,7 +87,12 @@ export class WorkerAPI {
   }
 
   runCppCheck(opts: RunCppCheckOptions): Promise<CppCheckOut[]> {
-    return this.runAsync("runCppCheck", opts) as Promise<CppCheckOut[]>;
+    try {
+      return this.runAsync("runCppCheck", opts) as Promise<CppCheckOut[]>;
+    } catch (error) {
+      console.error(error);
+      return Promise.reject(error);
+    }
   }
 
   private onmessage(event: any) {

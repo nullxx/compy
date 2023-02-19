@@ -90,43 +90,43 @@ async function onAnyMessage(event: MessageEvent) {
     //   break;
     // }
 
-    case "compileLinkRun":
-      {
-        if (currentApp) {
-          console.log("First, disallowing rAF from previous app.");
-          // Stop running rAF on the previous app, if any.
-          currentApp.allowRequestAnimationFrame = false;
-        }
-
-        const responseId = event.data.responseId;
-
-        let transferList;
-        try {
-          currentApp = await api.compileLinkRun(event.data.data);
-        } finally {
-          port.postMessage(
-            { id: "runAsync", responseId, data: currentApp },
-            transferList
-          );
-        }
-        break;
+    case "compileLinkRun": {
+      if (currentApp) {
+        console.log("First, disallowing rAF from previous app.");
+        // Stop running rAF on the previous app, if any.
+        currentApp.allowRequestAnimationFrame = false;
       }
 
-      case "runCppCheck": {
-        const responseId = event.data.responseId;
-        let output = null;
-        let transferList;
-        try {
-          output = await cppCheck.run(event.data.data);
-        } finally {
-          port.postMessage(
-            { id: "runAsync", responseId, data: output },
-            transferList
-          );
-        }
-        break;
-      }
+      const responseId = event.data.responseId;
 
+      let transferList;
+      try {
+        currentApp = await api.compileLinkRun(event.data.data);
+      } finally {
+        port.postMessage(
+          { id: "runAsync", responseId, data: currentApp },
+          transferList
+        );
+      }
+      break;
+    }
+
+    case "runCppCheck": {
+      const responseId = event.data.responseId;
+      let output = null;
+      let transferList;
+      try {
+        output = await cppCheck.run(event.data.data);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        port.postMessage(
+          { id: "runAsync", responseId, data: output },
+          transferList
+        );
+      }
+      break;
+    }
   }
 }
 

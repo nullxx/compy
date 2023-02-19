@@ -131,7 +131,7 @@ export default function RunProvider({
         headers
       });
 
-      if (!result) return;
+      if (!result) return
 
       mark(result);
     };
