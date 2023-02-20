@@ -106,6 +106,7 @@ export default function RunProvider({
     if (apiRef.current) {
       // terminate old worker
       apiRef.current.terminate();
+      delete apiRef.current;
     }
 
     const api = new WorkerAPI(waitForInput, write);

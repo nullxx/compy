@@ -4,6 +4,7 @@ import "xterm/css/xterm.css";
 import "./terminal.style.css";
 import { FitAddon } from "xterm-addon-fit";
 import { useTerminalContext } from "../../context/TerminalContext";
+import { useRunContext } from "../../context/Run";
 
 export interface _Terminal extends xterm.Terminal {
   _core: {
@@ -19,6 +20,7 @@ export default function Terminal() {
   const termDivRef = React.useRef<HTMLDivElement>(null);
   const termRef = React.useRef<_Terminal>();
   const { triggerInputListeners, addWriteListener } = useTerminalContext();
+  const { forceAbort } = useRunContext();
 
   async function onWriteRequest(text: string) {
     termRef.current?.write(text);
@@ -51,6 +53,7 @@ export default function Terminal() {
         // clean the acum
         acum = "";
         // emit a cancel signal
+        return forceAbort(); // need to return here to avoid writing the char
       } else if (ev.keyCode === 8) {
         // if acum is empty, do nothing
         if (acum.length === 0) {

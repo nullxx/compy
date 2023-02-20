@@ -56,6 +56,8 @@ export class WorkerAPI {
     }
     this.responseCBs.clear();
 
+    this.port.onmessage = null;
+    this.port.close();
     this.worker.terminate();
     this.workerTerminated = true;
   }
