@@ -139,7 +139,10 @@ export class API {
 
   async getModule(name: string) {
     if (this.moduleCache[name]) return this.moduleCache[name];
-    const module = await this.compileStreaming(name);
+    const module = await this.hostLogAsync(
+      `Fetching and compiling ${name}`,
+      this.compileStreaming(name)
+    );
     this.moduleCache[name] = module;
     return module;
   }
