@@ -202,7 +202,6 @@ export default function EditorProvider({
         return null;
       }
 
-
       let model = monaco?.editor.getModel(uri);
       if (!model) {
         const uri = monaco?.Uri.from({
@@ -220,15 +219,22 @@ export default function EditorProvider({
         }
       }
 
-      const markers = grouped[file].map((o) => ({
-        severity: getMonacoSeverity(o.severity),
-        startLineNumber: o.line,
-        startColumn: o.column,
-        endLineNumber: o.line,
-        // endColumn: end of line
-        endColumn: o.column + Infinity,
-        message: o.message,
-      }));
+      const markers = grouped[file].map((o) => {
+        const word = model?.getWordAtPosition({
+          lineNumber: o.line,
+          column: o.column,
+        });
+
+        return {
+          severity: getMonacoSeverity(o.severity),
+          startLineNumber: o.line,
+          startColumn: o.column,
+          endLineNumber: o.line,
+          // endColumn: end of line
+          endColumn: word?.endColumn ?? o.column + Infinity,
+          message: o.message,
+        };
+      });
 
       monaco?.editor.setModelMarkers(model, "owner", markers);
     });
