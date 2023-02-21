@@ -90,7 +90,7 @@ export default function RunProvider({
 
   const forceAbort = () => {
     loadNewWorkerAPI();
-    write("\n\u001b[41m##### Program forcefully terminated #####\u001b[0m\n");
+    write("\r\n\u001b[41m##### Program forcefully terminated #####\u001b[0m\r\n");
   };
 
   const loadNewWorkerAPI = useCallback(() => {

@@ -95,7 +95,7 @@ export class App {
       }
 
       let msg = `\x1b[91mExit code: ${code} (${errorMessage})`;
-      msg += "\x1b[0m\n";
+      msg += "\x1b[0m\r\n";
 
       if (this.shouldWriteStdout) this.memfs.hostWrite(msg);
 

@@ -131,9 +131,9 @@ export class API {
     if (this.showTiming) {
       const green = "\x1b[92m";
       const normal = "\x1b[0m";
-      this.hostWrite(` ${green}(${msToSec(start, end)}s)${normal}\n`);
+      this.hostWrite(` ${green}(${msToSec(start, end)}s)${normal}\r\n`);
     }
-    this.hostWrite("\n");
+    this.hostWrite("\r\n");
     return result;
   }
 
@@ -233,7 +233,7 @@ export class API {
     shouldWriteStdout = true,
     ...args: string[]
   ) {
-    if (shouldWriteStdout) this.hostLog(`${args.join(" ")}\n`);
+    if (shouldWriteStdout) this.hostLog(`${args.join(" ")}\r\n`);
 
     const name = args[0];
     const start = +new Date();
@@ -242,12 +242,12 @@ export class API {
     const instantiate = +new Date();
     const stillRunning = await app.run();
     const end = +new Date();
-    if (shouldWriteStdout) this.hostWrite("\n");
+    if (shouldWriteStdout) this.hostWrite("\r\n");
     if (this.showTiming && shouldWriteStdout) {
       const green = "\x1b[92m";
       const normal = "\x1b[0m";
       let msg = `${green}(${msToSec(start, instantiate)}s`;
-      msg += `/${msToSec(instantiate, end)}s)${normal}\n`;
+      msg += `/${msToSec(instantiate, end)}s)${normal}\r\n`;
       this.hostWrite(msg);
     }
     return stillRunning ? app : null;

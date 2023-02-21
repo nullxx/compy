@@ -49,6 +49,10 @@ export default function Terminal() {
       const ev = e.domEvent;
       const printable = !ev.altKey && !ev.ctrlKey && !ev.metaKey;
 
+      if (e.key === '\r') { // important because xterm.js replaces \r\n with \r
+        e.key = '\n';
+      }
+
       if (ev.keyCode === 67 && ev.ctrlKey) {
         // clean the acum
         acum = "";
