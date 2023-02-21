@@ -8,7 +8,7 @@ export interface Diagnostic {
 
 export class ClangParser {
   static parse(input: string) {
-    const matched = input.matchAll(/(.+):(\d+):(\d+):\s(\w+):\s(.+)/gm);
+    const matched = input.matchAll(/(.+):(\d+):(\d+):\s([^:]*):\s(.+)/gm);
     const diagnostics: Diagnostic[] = [];
 
     let match: RegExpMatchArray | null;

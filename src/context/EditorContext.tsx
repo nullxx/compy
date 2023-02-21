@@ -166,16 +166,17 @@ export default function EditorProvider({
         return 4;
       }
 
-      switch (str) {
-        case "error":
-          return monaco.MarkerSeverity.Error;
-        case "warning":
-          return monaco.MarkerSeverity.Warning;
-        case "info":
-          return monaco.MarkerSeverity.Info;
-        default:
-          return monaco.MarkerSeverity.Warning;
+      const errorMatch = str.match(/error/i);
+      if (errorMatch) {
+        return monaco.MarkerSeverity.Error;
       }
+
+      const warningMatch = str.match(/warning/i);
+      if (warningMatch) {
+        return monaco.MarkerSeverity.Warning;
+      }
+
+      return monaco.MarkerSeverity.Info;
     }
 
     // group by file
