@@ -49,6 +49,7 @@ export default function RunProvider({
   const apiRef = useRef<WorkerAPI>();
   const runningChangeListeners = useRef<OnRunningChange[]>([]);
   const [isRunning, setIsRunning] = useState(false);
+  const [rootHtml, setRootHtml] = useState<string | null>(null);
 
   const { addInputListener, write } = useTerminalContext();
   const { addChangeFileListener, mark, addOpenEditorListener, monaco } =
@@ -62,6 +63,13 @@ export default function RunProvider({
       );
     };
   };
+
+  useEffect(() => {
+    (async () => {
+      const rootHTML = await (await fetch("/")).text();
+      setRootHtml(rootHTML);
+    })();
+  }, []);
 
   const runProject = async () => {
     setIsRunning(true);
@@ -206,7 +214,10 @@ export default function RunProvider({
         let uri: string = `${baseURI}/3_${word.word}.html`;
         try {
           const result = await fetch(uri);
-          if (result.ok) htmlContent = await result.text();
+          if (result.ok) {
+            htmlContent = await result.text();
+            if (htmlContent === rootHtml) htmlContent = null;
+          }
         } catch (error) {
           console.error(error);
         }
