@@ -1,6 +1,7 @@
 import React from "react";
 import { createContext } from "react";
 import { IFile, IFilePlain } from "../service/fileService";
+import type { Monaco } from "@monaco-editor/react";
 
 type OpenFileTabListener = (file: IFilePlain) => void;
 type OnFileEditorShowListener = (file: IFilePlain) => void;
@@ -11,7 +12,8 @@ export interface EditorContext {
   theme: string;
   setTheme: (theme: string) => void;
 
-  setMonaco: (monaco: any) => void;
+  setMonaco: (monaco: Monaco) => void;
+  monaco: Monaco | null;
 
   addOpenTabListener: (listener: OpenFileTabListener) => () => void;
   openFileTab: (file: IFilePlain) => void;
@@ -54,6 +56,7 @@ const Context = createContext<EditorContext>({
   currentFile: null,
   mark: () => {},
   setMonaco: () => {},
+  monaco: null,
 });
 
 const themePrefix = "vs-";
@@ -67,7 +70,7 @@ export default function EditorProvider({
     themePrefix + (localStorage.getItem("dark") === "true" ? "dark" : "light")
   );
   const [currentFile, setCurrentFile] = React.useState<IFilePlain | null>(null);
-  const monacoRef = React.useRef<any>(null);
+  const monacoRef = React.useRef<Monaco | null>(null);
   const openFileListenerRef = React.useRef<OpenFileTabListener[]>([]);
   const openFileEditorListenerRef = React.useRef<OnFileEditorShowListener[]>(
     []
@@ -146,7 +149,7 @@ export default function EditorProvider({
     closeFileListenerRef.current.forEach((l) => l(file));
   };
 
-  const setMonaco = (monaco: any) => {
+  const setMonaco = (monaco: Monaco) => {
     monacoRef.current = monaco;
   };
 
@@ -189,7 +192,7 @@ export default function EditorProvider({
       return acc;
     }, {} as { [key: string]: typeof opts });
 
-    monaco.editor.getModels().forEach((model: any) => {
+    monaco?.editor.getModels().forEach((model: any) => {
       monaco.editor.setModelMarkers(model, "owner", []);
     });
 
@@ -256,6 +259,7 @@ export default function EditorProvider({
     currentFile,
     mark,
     setMonaco,
+    monaco: monacoRef.current,
   };
 
   return <Context.Provider value={value}>{children}</Context.Provider>;

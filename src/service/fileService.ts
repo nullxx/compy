@@ -1,3 +1,5 @@
+/* this is a caos... */
+
 import _Dexie from "dexie";
 import * as zip from "@zip.js/zip.js";
 
@@ -19,15 +21,12 @@ class Dexie extends _Dexie {
     this.version(1).stores({
       files: "++id,path,content,project,[path+project]",
     });
-
-    // compound index path + project
   }
 }
 
 const db = new Dexie("fileService");
 
 export default class FileService {
-
   async getFiles(project = FileService.currentProject) {
     return await db.files.where("project").equals(project).toArray();
   }
@@ -54,20 +53,21 @@ export default class FileService {
       const reader = new FileReader();
       reader.onload = async (e) => {
         const data = e.target?.result as ArrayBuffer;
-        if (data) {
-          const blob = new Blob([data]);
-          const zipReader = new zip.ZipReader(new zip.BlobReader(blob));
-          const entries = await zipReader.getEntries();
-          const files: File[] = [];
-          for (const entry of entries) {
+        if (!data) return reject(new Error("No data"));
+
+        const blob = new Blob([data]);
+        const zipReader = new zip.ZipReader(new zip.BlobReader(blob));
+        const entries = await zipReader.getEntries();
+        const files: File[] = await Promise.all(
+          entries.map(async (entry) => {
             const blob = await entry.getData(
               new zip.BlobWriter("application/octet-stream")
             );
-            const file = new File([blob], entry.filename);
-            files.push(file);
-          }
-          resolve(files);
-        }
+            return new File([blob], entry.filename);
+          })
+        );
+
+        return resolve(files);
       };
 
       reader.readAsArrayBuffer(new Blob([zipFile]));
@@ -78,12 +78,12 @@ export default class FileService {
 
     const files = zipFiles
       .filter((file) => !["__MACOSX"].includes(file.name.split("/")?.[0]))
-      // filter folders
       .filter((file) => !file.name.endsWith("/"));
 
-    // check if all files are in the same base folder (something/..., something/.../...)
     const baseFolder = files[0].name.split("/")[0];
-    const allInBaseFolder = files.every((file) => file.name.startsWith(baseFolder));
+    const allInBaseFolder = files.every((file) =>
+      file.name.startsWith(baseFolder)
+    );
 
     // if allInBaseFolder import the files inside allInBaseFolder as root
     if (allInBaseFolder) {
@@ -260,9 +260,7 @@ export default class FileService {
   }
 
   async getFileSystemAsTree(): Promise<any> {
-    const files = (await db.files.toArray()).filter(
-      (file) => file.project === FileService.currentProject
-    );
+    const files = await this.getFiles(FileService.currentProject);
     const tree: any[] = [];
     files.forEach((file) => {
       const path = file.path.split("/");
@@ -278,6 +276,7 @@ export default class FileService {
             key: file.id,
             icon: isFile ? "pi pi-fw pi-file" : "pi pi-fw pi-folder",
           };
+
           current.push(node);
         }
         if (isFile) {
@@ -301,16 +300,12 @@ export default class FileService {
   }
 
   async getFilesWith(ext: string) {
-    const files = (await db.files.toArray()).filter(
-      (file) => file.project === FileService.currentProject
-    );
+    const files = await this.getFiles(FileService.currentProject);
     return files.filter((file) => file.path.endsWith(ext));
   }
 
   async getFilesWithout(ext: string[] | string) {
-    const files = (await db.files.toArray()).filter(
-      (file) => file.project === FileService.currentProject
-    );
+    const files = await this.getFiles(FileService.currentProject);
     return files.filter((file) => {
       if (typeof ext === "string") {
         return !file.path.endsWith(ext);
@@ -320,9 +315,7 @@ export default class FileService {
   }
 
   async getFilesPathsWithout(extOrExts: string | string[]) {
-    const files = (await db.files.toArray()).filter(
-      (file) => file.project === FileService.currentProject
-    );
+    const files = await this.getFiles(FileService.currentProject);
     if (typeof extOrExts === "string") {
       return files
         .filter((file) => !file.path.endsWith(extOrExts))

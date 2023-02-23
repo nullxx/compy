@@ -9,3 +9,7 @@ section {
     width: 100% !important;
     min-width: none !important;
 }
+
+.hover-contents {
+    font-family: 'Courier New', Courier, monospace;
+}
