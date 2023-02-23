@@ -20,7 +20,7 @@ import { WorkerAPI } from "../lib/workerapi";
 import { IFile, IFilePlain } from "../service/fileService";
 import { useEditorContext } from "./EditorContext";
 import { useTerminalContext } from "./TerminalContext";
-import type { editor } from 'monaco-editor';
+import type { editor } from "monaco-editor";
 
 type OnRunningChange = (isRunning: boolean) => void;
 
@@ -154,7 +154,8 @@ export default function RunProvider({
 
     const disposable = monaco?.languages.registerHoverProvider(["c", "c++"], {
       async provideHover(model, position, token) {
-        const word: editor.IWordAtPosition | null = model.getWordAtPosition(position);
+        const word: editor.IWordAtPosition | null =
+          model.getWordAtPosition(position);
         if (!word) {
           return null;
         }
@@ -201,10 +202,10 @@ export default function RunProvider({
           };
         }
         let htmlContent: string | null = null;
+        let baseURI = process.env.PUBLIC_URL + "/resources/man";
+        let uri: string = `${baseURI}/3_${word.word}.html`;
         try {
-          const result = await fetch(
-            `http://man.lilei.tech/man/3_${word.word}.html`
-          );
+          const result = await fetch(uri);
           if (result.ok) htmlContent = await result.text();
         } catch (error) {
           console.error(error);
@@ -219,7 +220,7 @@ export default function RunProvider({
                   supportHtml: true,
                   baseUri: monaco.Uri.from({
                     scheme: "http",
-                    path: `/man/3_${word.word}.html`,
+                    path: uri,
                   }),
 
                   isTrusted: true,
