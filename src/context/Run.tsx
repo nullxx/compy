@@ -135,6 +135,9 @@ export default function RunProvider({
   useEffect(() => {
     const fn = debounce(
       async (file: IFilePlain) => {
+        const sourceType = getSourceType(file);
+        if (!sourceType) return;
+
         const contentArrBuffer = new TextEncoder().encode(file.content);
         const source: FileInput = {
           name: file?.path,
@@ -146,7 +149,7 @@ export default function RunProvider({
         const result = await apiRef.current?.runCppCheck({
           source,
           headers,
-          sourceType: getSourceType(file),
+          sourceType,
         });
 
         if (!result) return;

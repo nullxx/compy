@@ -62,8 +62,7 @@ export function getSourceType(file: IFile | IFilePlain) {
     return SourceType.C;
   } else if (ext === "cc" || ext === "cpp" || ext === "cxx") {
     return SourceType.CPP;
-  } else {
-    // default to cpp
-    return SourceType.CPP;
   }
+
+  return null;
 }
