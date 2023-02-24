@@ -211,20 +211,21 @@ export class API {
       lld,
       true,
       "wasm-ld",
-      "--no-threads",
-      "--export-dynamic", // TODO required?
-      "-z",
-      `stack-size=${stackSize}`,
+       "--no-threads",
+       "--export-dynamic", // TODO required?
+       "-z",
+       `stack-size=${stackSize}`,
       `-L${libdir}`,
       crt1,
-      libPathsStr,
+      `${libdir}/libunistd_ext.o`,
       libPathsStr,
       ...objs,
       "-o",
       wasm,
       "-lc",
       "-lc++",
-      "-lc++abi"
+      "-lc++abi",
+      "-lunistd_ext",
     );
   }
 
